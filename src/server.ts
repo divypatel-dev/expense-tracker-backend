@@ -20,12 +20,18 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+const allowedOrigins = config.corsOrigin.split(",");
+
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 

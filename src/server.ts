@@ -30,6 +30,14 @@ const isOriginAllowed = (origin: string): boolean => {
     return true;
   }
 
+  const normalizedOrigin = origin.toLowerCase();
+  if (
+    normalizedOrigin.endsWith('.vercel.app') ||
+    normalizedOrigin.endsWith('.vercel.sh')
+  ) {
+    return true;
+  }
+
   return allowedOrigins.some((allowedOrigin) => {
     if (!allowedOrigin.includes('*')) {
       return false;
@@ -44,18 +52,20 @@ const isOriginAllowed = (origin: string): boolean => {
   });
 };
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || isOriginAllowed(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin || isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
